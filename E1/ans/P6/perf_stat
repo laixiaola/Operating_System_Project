@@ -1,0 +1,207 @@
+`perf stat` 输出分析：
+
+webserver是I/O密集型任务，因为cpu利用率近似为0
+
+最值得注意的是这两行：
+
+```text id="8m1n3d"
+22.814117203 seconds time elapsed
+```
+
+```text id="yfyfd8"
+7.99 msec task-clock
+```
+
+意思是：
+
+ 程序总共运行了 22.8 秒
+ 但 CPU 实际只执行了 7.99 毫秒
+
+换句话说：
+
+```text id="k2bbp7"
+CPU利用率 ≈ 7.99ms / 22.8s
+         ≈ 0.035%
+```
+
+所以：
+服务器绝大多数时间都在等待，而不是在计算。
+
+---
+
+ task-clock
+
+```text id="0fk8hm"
+7.99 msec task-clock
+ 0.000 CPUs utilized
+```
+
+`task-clock`：
+
+ 线程真正占用 CPU 的时间
+
+这里：
+
+```text id="g7d3iu"
+7.99 ms
+```
+
+非常小。
+
+说明：
+
+ CPU不是瓶颈
+ 程序几乎没干活
+
+---
+
+ context-switches
+
+```text id="v64xtl"
+21 context-switches
+```
+
+上下文切换次数。
+
+表示：
+
+```text id="s04m98"
+运行
+↓
+睡眠
+↓
+被唤醒
+↓
+继续运行
+```
+
+共发生了 21 次。
+
+数量极少。
+
+---
+
+ cpu-migrations
+
+```text id="e4zzq9"
+2 cpu-migrations
+```
+
+线程从一个 CPU 核迁移到另一个 CPU 核。
+发生了 2 次。
+完全正常。
+
+---
+
+ page-faults
+
+```text id="z4b8ow"
+65 page-faults
+```
+
+页错误。
+
+这里绝大部分是：
+
+```text id="p8epxr"
+minor page fault
+```
+
+即：
+
+ 访问内存时需要建立映射
+ 不需要访问磁盘
+
+65 次非常少。
+
+---
+
+ cycles
+
+```text id="0j4n2n"
+8,792,572 cycles
+```
+
+CPU 时钟周期数。
+
+---
+
+ instructions
+
+```text id="4phj4d"
+5,466,931 instructions
+```
+
+执行了约 547 万条指令。
+
+---
+
+ IPC
+
+```text id="7h5t7w"
+0.62 insn per cycle
+```
+
+即：
+
+```text id="wfj8pi"
+IPC = instructions / cycles
+```
+
+CPU 每个周期执行：
+
+```text id="zw48zk"
+0.62 条指令
+```
+
+现代 CPU 通常：
+
+| IPC  | 含义  |
+| ---- | --- |
+| <0.5 | 很差  |
+| 1~2  | 一般  |
+| 2~4  | 较好  |
+| >4   | 非常高 |
+
+你的：
+
+```text id="nzdrqm"
+0.62
+```
+不高。
+但这里没意义。
+因为程序总共只运行了 8ms。
+样本太小。
+
+---
+
+ branches
+
+```text id="v6zy9p"
+1,055,087 branches
+```
+
+执行了约 105 万次分支判断：
+
+```c id="d1qq2v"
+if (...)
+while (...)
+switch (...)
+```
+
+---
+
+ branch-misses
+
+```text id="3n0mzm"
+59,101 branch-misses
+5.60%
+```
+
+CPU分支预测失败率：
+```text id="ll2d2v"
+5.6%
+```
+略高但不严重。
+
+---

@@ -1,0 +1,108 @@
+[Fri Jun  5 08:36:20 2026] INFO: request:GET /index.html HTTP/1.1**Host: 127.0.0.1:8080**User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0**Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8**Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2**Accept-Encoding: gzip, deflate, br, zstd**Connection: keep-alive**Upgrade-Insecure-Requests: 1**Sec-Fetch-Dest: document**Sec-Fetch-Mode: navigate**Sec-Fetch-Site: none**Sec-Fetch-User: ?1**Priority: u=0, i****:1
+[Fri Jun  5 08:36:20 2026] INFO: SEND:index.html:1
+[Fri Jun  5 08:36:20 2026] INFO: Header:HTTP/1.1 200 OK
+Server: nweb/23.0
+Content-Length: 239
+Connection: close
+Content-Type: text/html
+
+:1
+[Fri Jun  5 08:36:21 2026] INFO: request:GET /nigel.jpg HTTP/1.1**Host: 127.0.0.1:8080**User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0**Accept: image/avif,image/webp,image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5**Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2**Accept-Encoding: gzip, deflate, br, zstd**Connection: keep-alive**Referer: http://127.0.0.1:8080/index.html**Sec-Fetch-Dest: image**Sec-Fetch-Mode: no-cors**Sec-Fetch-Site: same-origin**Priority: u=4, i****:2
+[Fri Jun  5 08:36:21 2026] INFO: SEND:nigel.jpg:2
+[Fri Jun  5 08:36:21 2026] INFO: Header:HTTP/1.1 200 OK
+Server: nweb/23.0
+Content-Length: 10184
+Connection: close
+Content-Type: image/jpg
+
+:2
+[Fri Jun  5 08:36:22 2026] INFO: request:GET /favicon.ico HTTP/1.1**Host: 127.0.0.1:8080**User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0**Accept: image/avif,image/webp,image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5**Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2**Accept-Encoding: gzip, deflate, br, zstd**Connection: keep-alive**Referer: http://127.0.0.1:8080/index.html**Sec-Fetch-Dest: image**Sec-Fetch-Mode: no-cors**Sec-Fetch-Site: same-origin**Priority: u=6****:3
+[Fri Jun  5 08:36:22 2026] INFO: SEND:favicon.ico:3
+[Fri Jun  5 08:36:22 2026] INFO: Header:HTTP/1.1 200 OK
+Server: nweb/23.0
+Content-Length: 1334
+Connection: close
+Content-Type: image/ico
+
+:3
+[Fri Jun  5 08:38:01 2026] INFO: request:GET /index.html HTTP/1.1**Host: 127.0.0.1:8080**User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0**Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8**Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2**Accept-Encoding: gzip, deflate, br, zstd**Connection: keep-alive**Upgrade-Insecure-Requests: 1**Sec-Fetch-Dest: document**Sec-Fetch-Mode: navigate**Sec-Fetch-Site: none**Sec-Fetch-User: ?1**Priority: u=0, i****:1
+[Fri Jun  5 08:38:01 2026] INFO: SEND:index.html:1
+[Fri Jun  5 08:38:01 2026] INFO: Header:HTTP/1.1 200 OK
+Server: nweb/23.0
+Content-Length: 239
+Connection: close
+Content-Type: text/html
+
+:1
+[Fri Jun  5 08:38:02 2026] INFO: request:GET /nigel.jpg HTTP/1.1**Host: 127.0.0.1:8080**User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0**Accept: image/avif,image/webp,image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5**Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2**Accept-Encoding: gzip, deflate, br, zstd**Connection: keep-alive**Referer: http://127.0.0.1:8080/index.html**Sec-Fetch-Dest: image**Sec-Fetch-Mode: no-cors**Sec-Fetch-Site: same-origin**Priority: u=5, i****:2
+[Fri Jun  5 08:38:02 2026] INFO: SEND:nigel.jpg:2
+[Fri Jun  5 08:38:02 2026] INFO: Header:HTTP/1.1 200 OK
+Server: nweb/23.0
+Content-Length: 10184
+Connection: close
+Content-Type: image/jpg
+
+:2
+[Fri Jun  5 08:38:07 2026] INFO: request:GET /index.html HTTP/1.1**Host: 127.0.0.1:8080**User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0**Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8**Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2**Accept-Encoding: gzip, deflate, br, zstd**Connection: keep-alive**Upgrade-Insecure-Requests: 1**Sec-Fetch-Dest: document**Sec-Fetch-Mode: navigate**Sec-Fetch-Site: none**Sec-Fetch-User: ?1**Priority: u=0, i****:3
+[Fri Jun  5 08:38:07 2026] INFO: SEND:index.html:3
+[Fri Jun  5 08:38:07 2026] INFO: Header:HTTP/1.1 200 OK
+Server: nweb/23.0
+Content-Length: 239
+Connection: close
+Content-Type: text/html
+
+:3
+[Fri Jun  5 08:38:08 2026] INFO: request:GET /nigel.jpg HTTP/1.1**Host: 127.0.0.1:8080**User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0**Accept: image/avif,image/webp,image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5**Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2**Accept-Encoding: gzip, deflate, br, zstd**Connection: keep-alive**Referer: http://127.0.0.1:8080/index.html**Sec-Fetch-Dest: image**Sec-Fetch-Mode: no-cors**Sec-Fetch-Site: same-origin**Priority: u=5****:4
+[Fri Jun  5 08:38:08 2026] INFO: SEND:nigel.jpg:4
+[Fri Jun  5 08:38:08 2026] INFO: Header:HTTP/1.1 200 OK
+Server: nweb/23.0
+Content-Length: 10184
+Connection: close
+Content-Type: image/jpg
+
+:4
+[Fri Jun  5 08:38:10 2026] INFO: request:GET /index.html HTTP/1.1**Host: 127.0.0.1:8080**User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0**Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8**Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2**Accept-Encoding: gzip, deflate, br, zstd**Connection: keep-alive**Upgrade-Insecure-Requests: 1**Sec-Fetch-Dest: document**Sec-Fetch-Mode: navigate**Sec-Fetch-Site: none**Sec-Fetch-User: ?1**Priority: u=0, i****:5
+[Fri Jun  5 08:38:10 2026] INFO: SEND:index.html:5
+[Fri Jun  5 08:38:10 2026] INFO: Header:HTTP/1.1 200 OK
+Server: nweb/23.0
+Content-Length: 239
+Connection: close
+Content-Type: text/html
+
+:5
+[Fri Jun  5 08:38:11 2026] INFO: request:GET /nigel.jpg HTTP/1.1**Host: 127.0.0.1:8080**User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0**Accept: image/avif,image/webp,image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5**Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2**Accept-Encoding: gzip, deflate, br, zstd**Connection: keep-alive**Referer: http://127.0.0.1:8080/index.html**Sec-Fetch-Dest: image**Sec-Fetch-Mode: no-cors**Sec-Fetch-Site: same-origin**Priority: u=5****:6
+[Fri Jun  5 08:38:11 2026] INFO: SEND:nigel.jpg:6
+[Fri Jun  5 08:38:11 2026] INFO: Header:HTTP/1.1 200 OK
+Server: nweb/23.0
+Content-Length: 10184
+Connection: close
+Content-Type: image/jpg
+
+:6
+[Fri Jun  5 08:38:12 2026] INFO: request:GET /index.html HTTP/1.1**Host: 127.0.0.1:8080**User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0**Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8**Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2**Accept-Encoding: gzip, deflate, br, zstd**Connection: keep-alive**Upgrade-Insecure-Requests: 1**Sec-Fetch-Dest: document**Sec-Fetch-Mode: navigate**Sec-Fetch-Site: none**Sec-Fetch-User: ?1**Priority: u=0, i****:7
+[Fri Jun  5 08:38:12 2026] INFO: SEND:index.html:7
+[Fri Jun  5 08:38:12 2026] INFO: Header:HTTP/1.1 200 OK
+Server: nweb/23.0
+Content-Length: 239
+Connection: close
+Content-Type: text/html
+
+:7
+[Fri Jun  5 08:38:13 2026] INFO: request:GET /nigel.jpg HTTP/1.1**Host: 127.0.0.1:8080**User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0**Accept: image/avif,image/webp,image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5**Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2**Accept-Encoding: gzip, deflate, br, zstd**Connection: keep-alive**Referer: http://127.0.0.1:8080/index.html**Sec-Fetch-Dest: image**Sec-Fetch-Mode: no-cors**Sec-Fetch-Site: same-origin**Priority: u=5****:8
+[Fri Jun  5 08:38:13 2026] INFO: SEND:nigel.jpg:8
+[Fri Jun  5 08:38:13 2026] INFO: Header:HTTP/1.1 200 OK
+Server: nweb/23.0
+Content-Length: 10184
+Connection: close
+Content-Type: image/jpg
+
+:8
+[Fri Jun  5 08:38:14 2026] INFO: request:GET /index.html HTTP/1.1**Host: 127.0.0.1:8080**User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0**Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8**Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2**Accept-Encoding: gzip, deflate, br, zstd**Connection: keep-alive**Upgrade-Insecure-Requests: 1**Sec-Fetch-Dest: document**Sec-Fetch-Mode: navigate**Sec-Fetch-Site: none**Sec-Fetch-User: ?1**Priority: u=0, i****:9
+[Fri Jun  5 08:38:14 2026] INFO: SEND:index.html:9
+[Fri Jun  5 08:38:14 2026] INFO: Header:HTTP/1.1 200 OK
+Server: nweb/23.0
+Content-Length: 239
+Connection: close
+Content-Type: text/html
+
+:9

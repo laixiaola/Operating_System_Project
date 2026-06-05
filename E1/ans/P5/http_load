@@ -1,0 +1,9 @@
+run@zhi:~/http_load-09Mar2016$ ./http_load -parallel 5 -fetches 50 -seconds 20 urls
+20 fetches, 5 max parallel, 4780 bytes, in 20.0014 seconds
+239 mean bytes/connection
+0.999929 fetches/sec, 238.983 bytes/sec
+msecs/connect: 0.1456 mean, 0.218 max, 0.017 min
+msecs/first-response: 4252.09 mean, 5002.52 max, 0.358 min
+HTTP response codes:
+  code 200 -- 20
+

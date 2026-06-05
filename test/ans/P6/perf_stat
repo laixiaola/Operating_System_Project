@@ -1,0 +1,15 @@
+run@zhi:~/OS/E1/ans/P6$ perf stat -p 581419
+^C
+ Performance counter stats for process id '581419':
+
+         25,555.64 msec task-clock                #    1.197 CPUs utilized          
+           209,167      context-switches          #    8.185 K/sec                  
+            21,021      cpu-migrations            #  822.558 /sec                   
+         6,396,733      page-faults               #  250.306 K/sec                  
+   104,899,309,245      cycles                    #    4.105 GHz                    
+   117,176,221,106      instructions              #    1.12  insn per cycle         
+    22,817,398,466      branches                  #  892.852 M/sec                  
+       199,124,410      branch-misses             #    0.87% of all branches        
+
+      21.346066820 seconds time elapsed
+
