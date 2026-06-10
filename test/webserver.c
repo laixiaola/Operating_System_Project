@@ -155,20 +155,11 @@ void web(int fd, int hit)
   sleep(1);  /* allow socket to drain before signalling the socket is closed */
   close(fd);
   
-  //计时结束
- // long long end_time = get_time();
- // long long cost=end_time-start_time;
-//  char buf[128];
-//  sprintf(buf, "[web_cost]=%lld us", cost);
-//  logger(LOG, "web", buf, fd);
-  
   exit(1);
 }
 
 int main(int argc, char **argv)
 {
-  //开始计时
-//  long long start_time = get_time();
   
   int i, port, pid, listenfd, socketfd, hit;
   socklen_t length;
