@@ -29,10 +29,10 @@
 #endif
 
 // 获取当前时间
-static long long get_usec() {
+static long long get_time() {
     struct timeval tv;
     gettimeofday(&tv, NULL);
-    return (long long)tv.tv_sec * 1000000 + tv.tv_usec;
+    return (long long)tv.tv_sec * 1000 + tv.tv_usec/1000;
 }
 
 struct {
@@ -82,11 +82,13 @@ void logger(int type, char *s1, char *s2, int socket_fd)
     }
 
     /* 将 logbuffer 缓存中的消息存入 webserver.log 文件*/
+    long long log_start=get_time();
     if ((fd = open("webserver.log", O_CREAT | O_WRONLY | O_APPEND, 0644)) >= 0) {
         (void)write(fd, logbuffer, strlen(logbuffer));
         (void)write(fd, "\n", 1);
         (void)close(fd);
     }
+    long long log_cost=get_time()-log_start;
 }
 
 // 计时日志

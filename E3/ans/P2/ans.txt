@@ -1,0 +1,11 @@
+现象 1：并行数升高，QPS 不涨反而下跌
+你现在是一连接一线程模型（每次 accept 直接 pthread_create 分离线程），并行加大后性能雪崩的根因：
+    线程爆炸，上下文切换疯狂消耗 CPU
+    操作系统要不停切换线程寄存器、刷新 TLB、切换栈，CPU 大量时间浪费在线程调度，真正处理 HTTP 业务的 CPU 时间变少，QPS 下降、延迟飙升。
+    大量短连接带来海量系统调用
+    pthread_create、pthread_detach、close、open、write、日志文件 open/close 全部是系统调用，并发拉高后内核态 CPU 占满，用户态处理请求能力被挤压。
+    文件描述符快速耗尽
+    每一条连接占用 1 个 socket fd，读取文件占用 1 个 file fd；并行越高，fd 消耗越快，接近ulimit -n上限后：
+        open () 返回 - 1 → 大量 404；
+        accept () 创建 socket 失败；
+        资源分配失败触发异常逻辑，线程出错。
