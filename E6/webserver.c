@@ -12,6 +12,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "pool.h"
+#include "Hash.h"
+#include "Cache.h"
+#include "LRU.h"
+#include "LFU.h"
 
 #define VERSION 23
 #define BUFSIZE 8096
@@ -61,14 +65,16 @@ typedef struct
 
 typedef struct
 {
-  int fd;          // 客户端socket
-  char *data;      // 完整响应数据(HTTP头+文件内容)
-  size_t data_len; // 数据总长度
+  int fd;
+  content *cont;
+  char* filetype;
 } sendparam;
 
 void web_read_msg(void *arg);
 void web_read_file(void *arg);
 void web_send_msg(void *arg);
+
+Cache *cache;
 
 void logger(int type, char *s1, char *s2, int socket_fd)
 {
@@ -117,11 +123,7 @@ void web_read_msg(void *arg)
   // 读取失败/无数据，关闭连接并释放资源
   if (ret <= 0)
   {
-    logger(FORBIDDEN,
-           "failed to read browser request",
-           "",
-           fd);
-
+    logger(FORBIDDEN,"failed to read browser request","",fd);
     close(fd);
     free(rarg);
     return;
@@ -201,22 +203,47 @@ void web_read_msg(void *arg)
     free(rarg);
     return;
   }
+  // 拼接本地文件路径
+  char filename[256];
+  snprintf(filename, sizeof(filename), ".%s", url);
 
-  // 构造读文件任务参数
-  readparam *farg =
-      malloc(sizeof(readparam));
+  //查询缓存 
+  content *cont = Cache_Get(cache, filename);
+  //命中
+  if (cont != NULL)
+  {
+    logger(LOG, "CACHE HIT", filename, hit);
+    
+    // atomic_fetch_add(&cont->ref,1);
+    sendparam *sarg = malloc(sizeof(sendparam));
+    sarg->fd = fd;
+    sarg->cont = cont;
+    sarg->filetype=fstr;
+
+
+    task *t = malloc(sizeof(task));
+    t->function = web_send_msg;
+    t->arg = sarg;
+    t->next = NULL;
+
+    addTask2ThreadPool(rarg->sendpool, t);
+
+    free(rarg);
+    return;
+  }
+
+  logger(LOG, "CACHE MISS", filename, hit);
+
+  // 未命中缓存，读取磁盘 
+  readparam *farg = malloc(sizeof(readparam));
 
   farg->fd = fd;
-  farg->hit = rarg->hit;
+  farg->hit = hit;
   farg->pool = rarg->sendpool;
   farg->filetype = fstr;
-  // 拼接本地文件路径(相对当前工作目录)
-  snprintf(farg->filename,
-           sizeof(farg->filename),
-           ".%s",
-           url);
 
-  // 封装任务并加入读文件线程池
+  strcpy(farg->filename, filename);
+
   task *t = malloc(sizeof(task));
   t->function = web_read_file;
   t->arg = farg;
@@ -229,13 +256,9 @@ void web_read_msg(void *arg)
 
 void web_read_file(void *arg)
 {
-  readparam *farg = arg;
+  readparam *farg = (readparam *)arg;
+  int file_fd = open(farg->filename, O_RDONLY);
 
-  // 打开请求的本地文件
-  int file_fd =
-      open(farg->filename, O_RDONLY);
-
-  // 文件打开失败，断开连接释放资源
   if (file_fd < 0)
   {
     logger(NOTFOUND,
@@ -247,61 +270,37 @@ void web_read_file(void *arg)
     free(farg);
     return;
   }
-  logger(LOG,
-         "SEND",
-         farg->filename,
-         farg->hit);
-  // 获取文件大小
-  off_t filesize =lseek(file_fd, 0, SEEK_END);
-  lseek(file_fd, 0, SEEK_SET);
+  struct stat st;
+  fstat(file_fd, &st);
+  size_t filesize = st.st_size;
+  content *cont = malloc(sizeof(content));
+  cont->address = malloc(filesize);
+  // atomic_init(&cont->ref, 1);
+  //strcpy(cont->filetype, farg->filetype);
 
-  // 拼接HTTP 200响应头
-  char header[1024];
-  int header_len =
-      snprintf(header,
-         sizeof(header),
-         "HTTP/1.1 200 OK\r\n"
-         "Content-Length: %ld\r\n"
-         "Connection: close\r\n"
-         "Content-Type: %s\r\n"
-         "\r\n",
-         (long)filesize,
-         farg->filetype);
+  size_t total = 0;
 
-  logger(LOG,
-         "Header",
-         header,
-         farg->hit);
-
-  // 计算响应总长度：响应头 + 文件内容
-  size_t total =
-      header_len + filesize;
-
-  // 分配内存存放完整响应数据
-  char *response =
-      malloc(total);
-
-  // 拷贝响应头
-  memcpy(response,
-         header,
-         header_len);
-  // 读取文件内容到响应缓冲区
-  read(file_fd,
-       response + header_len,
-       filesize);
+  while (total < filesize)
+  {
+    ssize_t n =read(file_fd,(char *)cont->address + total,filesize - total);
+    if (n <= 0) break;
+    total += n;
+  }
+  cont->length = total;
 
   close(file_fd);
 
-  // 构造发送数据任务参数
+  Cache_Put(cache,farg->filename,cont);
+
   sendparam *sarg =
       malloc(sizeof(sendparam));
 
   sarg->fd = farg->fd;
-  sarg->data = response;
-  sarg->data_len = total;
+  sarg->cont = cont;
+  sarg->filetype=farg->filetype;
 
-  // 封装发送任务，加入发送线程池
   task *t = malloc(sizeof(task));
+
   t->function = web_send_msg;
   t->arg = sarg;
   t->next = NULL;
@@ -313,27 +312,54 @@ void web_read_file(void *arg)
 
 void web_send_msg(void *arg)
 {
-  sendparam *param = (sendparam *)arg;
+    sendparam *param = (sendparam *)arg;
+    
+    content *cont = param->cont;
 
-  size_t sent = 0;
-  // 循环发送，确保数据全部写完(处理写缓冲区未满场景)
-  while (sent < param->data_len)
-  {
-    ssize_t n =
-        write(param->fd,
-              param->data + sent,
-              param->data_len - sent);
+    char header[512];
 
-    if (n <= 0)
-      break;
+    int header_len=snprintf(header,
+                 sizeof(header),
+                 "HTTP/1.1 200 OK\r\n"
+                 "Content-Length: %zu\r\n"
+                 "Connection: close\r\n"
+                 "Content-Type: %s\r\n"
+                 "\r\n",
+                 cont->length,
+                 param->filetype);
+    size_t sent = 0;
 
-    sent += n;
-  }
+    while(sent < header_len)
+    {
+        ssize_t n =
+            write(param->fd,
+                  header + sent,
+                  header_len - sent);
+        if(n <= 0)
+            break;
+        sent += n;
+    }
+    sent = 0;
 
-  // 关闭客户端连接、释放动态内存
-  close(param->fd);
-  free(param->data);
-  free(param);
+    while(sent < cont->length)
+    {
+        ssize_t n =
+            write(param->fd,
+                  (char*)cont->address + sent,
+                  cont->length - sent);
+
+        if(n <= 0)
+            break;
+
+        sent += n;
+    }
+
+    close(param->fd);
+    // if (atomic_fetch_sub(&cont->ref, 1) == 1) {
+    //     free(cont->address);
+    //     free(cont);
+    // }
+    free(param);
 }
 
 int main(int argc, char **argv)
@@ -392,6 +418,17 @@ int main(int argc, char **argv)
   threadpool *read_msg_pool = initThreadPool(5);
   threadpool *read_file_pool = initThreadPool(5);
   threadpool *send_msg_pool = initThreadPool(5);
+
+  //初始化缓存
+#ifdef LRUA
+  ReplacementPolicy *policy =LRU_CreatePolicy(5);
+#endif
+
+#ifdef LFUA
+  ReplacementPolicy *policy =LFU_CreatePolicy(5);
+#endif
+
+  cache =Cache_Create(10, policy);
 
   // 填充服务端地址结构
   serv_addr.sin_family = AF_INET;

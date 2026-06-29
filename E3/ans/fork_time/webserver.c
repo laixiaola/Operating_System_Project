@@ -13,6 +13,7 @@
 #include <sys/time.h>
 #include <sys/mman.h>
 #include <semaphore.h>
+#include <sys/wait.h>
 
 #define VERSION 23
 #define BUFSIZE 8096
@@ -99,6 +100,12 @@ Share* init_shared_memory(char* shname,char* semname) {
     *(long long*)sh->ptr=0;
     
     return sh;
+}
+
+void sigchld_handler(int sig)
+{
+    // 循环收割所有已退出子进程，防止瞬间多子进程遗漏
+    while (waitpid(-1, NULL, WNOHANG) > 0);
 }
 
 void print_time(int hit,Share *skr,Share *skw,Share *lgw,Share *flr,Share *tt){
@@ -373,7 +380,7 @@ int main(int argc, char **argv)
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     serv_addr.sin_port = htons(port);
-
+    signal(SIGCHLD, sigchld_handler);
     if (bind(listenfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
         logger(ERROR, "system call", "bind", 0,log_write);
 
@@ -392,7 +399,7 @@ int main(int argc, char **argv)
 		(void)close(listenfd);
         	web(socketfd, hit,socket_read,socket_write,log_write,file_read,total_time,print_sem);
 
-		exit(1);
+		exit(0);
         }
         else{
         	(void)close(socketfd);	//父进程

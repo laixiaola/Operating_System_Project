@@ -13,6 +13,7 @@
 #include <sys/time.h>
 #include <sys/mman.h>
 #include <semaphore.h>
+#include <sys/wait.h>
 
 #define VERSION 23
 #define BUFSIZE 8096
@@ -51,6 +52,12 @@ static long long get_time() {
     return (long long)tv.tv_sec * 1000 + tv.tv_usec/1000;
 }
 
+void sigchld_handler(int sig)
+{
+    // 循环收割所有已退出子进程，防止瞬间多子进程遗漏
+    while (waitpid(-1, NULL, WNOHANG) > 0);
+}
+
 /* 日志函数，将运行过程中的提示信息记录到 webserver.log 文件中*/
 void logger(int type, char *s1, char *s2, int socket_fd)
 {
@@ -67,7 +74,7 @@ void logger(int type, char *s1, char *s2, int socket_fd)
         case ERROR:
             (void)sprintf(logbuffer, "[%s] ERROR: %s:%s Errno=%d exiting pid=%d", time_str, s1, s2, errno, getpid());
             break;
-        case FORBIDDEN:在
+        case FORBIDDEN:
             (void)write(socket_fd, "HTTP/1.1 403 Forbidden\nContent-Length: 185\nConnection: close\nContent-Type: text/html\n\n<html><head>\n<title>403 Forbidden</title>\n</head><body>\n<h1>Forbidden</h1>\n The requested URL, file type or operation is not allowed on this simple static file webserver.\n</body></html>\n", 271);
             (void)sprintf(logbuffer, "[%s] FORBIDDEN: %s:%s", time_str, s1, s2);
             break;
@@ -198,7 +205,7 @@ void web(int fd, int hit)
         (void)write(fd, buffer, ret);
     }
 
-    sleep(1); /* sleep 的作用是防止消息未发出，已经将此 socket 通道关闭*/
+    //sleep(1); /* sleep 的作用是防止消息未发出，已经将此 socket 通道关闭*/
     close(fd);
 }
 
@@ -266,6 +273,8 @@ int main(int argc, char **argv)
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     serv_addr.sin_port = htons(port);
+    
+    signal(SIGCHLD, sigchld_handler);
 
     if (bind(listenfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
         logger(ERROR, "system call", "bind", 0);
@@ -280,7 +289,9 @@ int main(int argc, char **argv)
 	
 	//创建多进程
 	int pid=fork();
-	if(pid<0) logger(ERROR,"system call","fork",0);
+	if(pid<0) {
+        	logger(ERROR,"system call","fork",0);
+    	}
 	else if(pid==0){	//子进程
 		long long c_start,c_end,tcost;
 		c_start=get_time();
@@ -301,7 +312,7 @@ int main(int argc, char **argv)
 
         	log_time(pname,tcost);
 		log_time("当前所有子进程总耗时",total_child_cost);
-		exit(1);
+		exit(0);
         }
         else{
         	(void)close(socketfd);	//父进程
