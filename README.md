@@ -6,7 +6,7 @@
 
 整个project具体内容请参考教材《操作系统实验教材：Web服务器性能优化》
 
-包括从实验一到实验五的相关内容，实验五以后的内容请自己探索吧 (x_x)
+包括从实验一到实验六的相关内容，实验六以后的内容请自己探索吧 (x_x)
 
 运行环境为ubuntu2020
 
@@ -26,6 +26,7 @@
     |    ├── pool.c          # 线程池核心实现代码
     |    └── pool.h          # 线程池头文件，提供线程池接口给webserver
     ├── E5/     # 实验五
+    ├── E6/     # 实验六
     |    └── htmls/          # 包含多个网站文件供测试
     └── test/    # 测试用文件夹，包含github上原版的webserver
 ```
@@ -36,3 +37,5 @@ webserver原版代码：https://github.com/ankushagarwal/nweb
 线程池参考：https://github.com/Pithikos/C-Thread-Pool
 
 http_load压测工具：https://www.acme.com/software/http_load/
+
+哈希表参考：https://github.com/watmough/jwHash
