@@ -117,11 +117,7 @@ void web_read_msg(void *arg)
   // 读取失败/无数据，关闭连接并释放资源
   if (ret <= 0)
   {
-    logger(FORBIDDEN,
-           "failed to read browser request",
-           "",
-           fd);
-
+    logger(FORBIDDEN,"failed to read browser request","",fd);
     close(fd);
     free(rarg);
     return;
@@ -132,10 +128,7 @@ void web_read_msg(void *arg)
   // 仅支持GET请求，非GET直接断开连接
   if (strncmp(buffer, "GET ", 4))
   {
-    logger(FORBIDDEN,
-           "Only simple GET operation supported",
-           buffer,
-           fd);
+    logger(FORBIDDEN,"Only simple GET operation supported",buffer,fd);
 
     close(fd);
     free(rarg);
@@ -169,8 +162,7 @@ void web_read_msg(void *arg)
     int len = strlen(extensions[i].ext);
 
     if (buflen >= len &&
-        !strcmp(url + buflen - len,
-                extensions[i].ext))
+        !strcmp(url + buflen - len,extensions[i].ext))
     {
       fstr = extensions[i].filetype;
       break;
@@ -179,10 +171,7 @@ void web_read_msg(void *arg)
 
   if (fstr == NULL)
   {
-    logger(FORBIDDEN,
-           "file extension type not supported",
-           url,
-           fd);
+    logger(FORBIDDEN,"file extension type not supported",url,fd);
 
     close(fd);
     free(rarg);
@@ -192,10 +181,7 @@ void web_read_msg(void *arg)
   // 禁止路径穿越(包含 .. )
   if (strstr(url, ".."))
   {
-    logger(FORBIDDEN,
-           "Parent directory (..) path names not supported",
-           url,
-           fd);
+    logger(FORBIDDEN,"Parent directory (..) path names not supported",url,fd);
 
     close(fd);
     free(rarg);
@@ -211,10 +197,7 @@ void web_read_msg(void *arg)
   farg->pool = rarg->sendpool;
   farg->filetype = fstr;
   // 拼接本地文件路径(相对当前工作目录)
-  snprintf(farg->filename,
-           sizeof(farg->filename),
-           ".%s",
-           url);
+  snprintf(farg->filename,sizeof(farg->filename),".%s",url);
 
   // 封装任务并加入读文件线程池
   task *t = malloc(sizeof(task));
@@ -238,19 +221,13 @@ void web_read_file(void *arg)
   // 文件打开失败，断开连接释放资源
   if (file_fd < 0)
   {
-    logger(NOTFOUND,
-           "failed to open file",
-           farg->filename,
-           farg->fd);
+    logger(NOTFOUND,"failed to open file",farg->filename,farg->fd);
 
     close(farg->fd);
     free(farg);
     return;
   }
-  logger(LOG,
-         "SEND",
-         farg->filename,
-         farg->hit);
+  logger(LOG,"SEND",farg->filename,farg->hit);
   // 获取文件大小
   off_t filesize =lseek(file_fd, 0, SEEK_END);
   lseek(file_fd, 0, SEEK_SET);
@@ -268,27 +245,18 @@ void web_read_file(void *arg)
          (long)filesize,
          farg->filetype);
 
-  logger(LOG,
-         "Header",
-         header,
-         farg->hit);
+  logger(LOG,"Header",header,farg->hit);
 
   // 计算响应总长度：响应头 + 文件内容
-  size_t total =
-      header_len + filesize;
+  size_t total =header_len + filesize;
 
   // 分配内存存放完整响应数据
-  char *response =
-      malloc(total);
+  char *response =malloc(total);
 
   // 拷贝响应头
-  memcpy(response,
-         header,
-         header_len);
+  memcpy(response,header,header_len);
   // 读取文件内容到响应缓冲区
-  read(file_fd,
-       response + header_len,
-       filesize);
+  read(file_fd,response + header_len,filesize);
 
   close(file_fd);
 

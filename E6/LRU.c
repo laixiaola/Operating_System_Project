@@ -139,7 +139,6 @@ static char *LRU_Insert(void *ptr, const char *key)
     // 淘汰尾部节点
     if (lru->size > lru->capacity)
     {
-
         LRUNode *victim =lru->tail;
         char *key =strdup(victim->key);
         printf("[LRU] Cache full, replace page: %s\n",victim->key);

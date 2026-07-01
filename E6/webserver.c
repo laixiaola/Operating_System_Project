@@ -63,11 +63,11 @@ typedef struct
   threadpool *pool; // 发送数据线程池
 } readparam;
 
-typedef struct
-{
-  int fd;
-  content *cont;
-  char* filetype;
+typedef struct {
+    int fd;
+    void *data;      // 数据副本（独立于缓存）
+    size_t length;   // 数据长度
+    char* filetype;
 } sendparam;
 
 void web_read_msg(void *arg);
@@ -111,254 +111,226 @@ void logger(int type, char *s1, char *s2, int socket_fd)
 
 void web_read_msg(void *arg)
 {
-  webparam *rarg = arg;
+    webparam *rarg = arg;
+    int fd = rarg->fd;
+    int hit = rarg->hit;
+    char buffer[BUFSIZE + 1];
 
-  int fd = rarg->fd;
-  int hit = rarg->hit;
-  char buffer[BUFSIZE + 1];
-
-  // 读取客户端请求数据
-  int ret = read(fd, buffer, BUFSIZE);
-
-  // 读取失败/无数据，关闭连接并释放资源
-  if (ret <= 0)
-  {
-    logger(FORBIDDEN,"failed to read browser request","",fd);
-    close(fd);
-    free(rarg);
-    return;
-  }
-
-  buffer[ret] = '\0';
-  logger(LOG, "request", buffer, hit);
-  // 仅支持GET请求，非GET直接断开连接
-  if (strncmp(buffer, "GET ", 4))
-  {
-    logger(FORBIDDEN,
-           "Only simple GET operation supported",
-           buffer,
-           fd);
-
-    close(fd);
-    free(rarg);
-    return;
-  }
-
-  // 截取请求URL部分
-  char *url = buffer + 4;
-  char *space = strchr(url, ' ');
-
-  // 请求格式非法，断开连接
-  if (space == NULL)
-  {
-    close(fd);
-    free(rarg);
-    return;
-  }
-
-  *space = '\0';
-
-  // 访问根目录则默认访问 index.html
-  if (strcmp(url, "/") == 0)
-    strcpy(url, "/index.html");
-
-  char *fstr = NULL;
-
-  int buflen = strlen(url);
-
-  for (int i = 0; extensions[i].ext != 0; i++)
-  {
-    int len = strlen(extensions[i].ext);
-
-    if (buflen >= len &&
-        !strcmp(url + buflen - len,
-                extensions[i].ext))
-    {
-      fstr = extensions[i].filetype;
-      break;
+    int ret = read(fd, buffer, BUFSIZE);
+    if (ret <= 0) {
+        logger(FORBIDDEN,"failed to read browser request","",fd);
+        close(fd);
+        free(rarg);
+        return;
     }
-  }
 
-  if (fstr == NULL)
-  {
-    logger(FORBIDDEN,
-           "file extension type not supported",
-           url,
-           fd);
-
-    close(fd);
-    free(rarg);
-    return;
-  }
-
-  // 禁止路径穿越(包含 .. )
-  if (strstr(url, ".."))
-  {
-    logger(FORBIDDEN,
-           "Parent directory (..) path names not supported",
-           url,
-           fd);
-
-    close(fd);
-    free(rarg);
-    return;
-  }
-  // 拼接本地文件路径
-  char filename[256];
-  snprintf(filename, sizeof(filename), ".%s", url);
-
-  //查询缓存 
-  content *cont = Cache_Get(cache, filename);
-  //命中
-  if (cont != NULL)
-  {
-    logger(LOG, "CACHE HIT", filename, hit);
+    buffer[ret] = '\0';
+    logger(LOG, "request", buffer, hit);
     
-    // atomic_fetch_add(&cont->ref,1);
-    sendparam *sarg = malloc(sizeof(sendparam));
-    sarg->fd = fd;
-    sarg->cont = cont;
-    sarg->filetype=fstr;
+    if (strncmp(buffer, "GET ", 4)) {
+        logger(FORBIDDEN, "Only simple GET operation supported", buffer, fd);
+        close(fd);
+        free(rarg);
+        return;
+    }
 
+    char *url = buffer + 4;
+    char *space = strchr(url, ' ');
+    if (space == NULL) {
+        close(fd);
+        free(rarg);
+        return;
+    }
+    *space = '\0';
+
+    if (strcmp(url, "/") == 0)
+        strcpy(url, "/index.html");
+
+    char *fstr = NULL;
+    int buflen = strlen(url);
+
+    for (int i = 0; extensions[i].ext != 0; i++) {
+        int len = strlen(extensions[i].ext);
+        if (buflen >= len && !strcmp(url + buflen - len, extensions[i].ext)) {
+            fstr = extensions[i].filetype;
+            break;
+        }
+    }
+
+    if (fstr == NULL) {
+        logger(FORBIDDEN, "file extension type not supported", url, fd);
+        close(fd);
+        free(rarg);
+        return;
+    }
+
+    if (strstr(url, "..")) {
+        logger(FORBIDDEN, "Parent directory (..) path names not supported", url, fd);
+        close(fd);
+        free(rarg);
+        return;
+    }
+
+    char filename[256];
+    snprintf(filename, sizeof(filename), ".%s", url);
+
+    // 直接读取文件
+    readparam *farg = malloc(sizeof(readparam));
+    farg->fd = fd;
+    farg->hit = hit;
+    farg->pool = rarg->sendpool;
+    farg->filetype = fstr;
+    strcpy(farg->filename, filename);
 
     task *t = malloc(sizeof(task));
-    t->function = web_send_msg;
-    t->arg = sarg;
+    t->function = web_read_file;
+    t->arg = farg;
     t->next = NULL;
-
-    addTask2ThreadPool(rarg->sendpool, t);
+    addTask2ThreadPool(rarg->readpool, t);
 
     free(rarg);
-    return;
-  }
-
-  logger(LOG, "CACHE MISS", filename, hit);
-
-  // 未命中缓存，读取磁盘 
-  readparam *farg = malloc(sizeof(readparam));
-
-  farg->fd = fd;
-  farg->hit = hit;
-  farg->pool = rarg->sendpool;
-  farg->filetype = fstr;
-
-  strcpy(farg->filename, filename);
-
-  task *t = malloc(sizeof(task));
-  t->function = web_read_file;
-  t->arg = farg;
-  t->next = NULL;
-
-  addTask2ThreadPool(rarg->readpool, t);
-
-  free(rarg);
 }
 
 void web_read_file(void *arg)
 {
-  readparam *farg = (readparam *)arg;
-  int file_fd = open(farg->filename, O_RDONLY);
+    readparam *farg = (readparam *)arg;
+    int file_fd = open(farg->filename, O_RDONLY);
 
-  if (file_fd < 0)
-  {
-    logger(NOTFOUND,
-           "failed to open file",
-           farg->filename,
-           farg->fd);
-
-    close(farg->fd);
+    if (file_fd < 0)
+    {
+        logger(NOTFOUND,
+               "failed to open file",
+               farg->filename,
+               farg->fd);
+        close(farg->fd);
+        free(farg);
+        return;
+    }
+    
+    struct stat st;
+    fstat(file_fd, &st);
+    size_t filesize = st.st_size;
+    
+    // 读取文件到buffer
+    char *buffer = malloc(filesize);
+    if (buffer == NULL) {
+        logger(ERROR, "malloc failed", "buffer", farg->fd);
+        close(file_fd);
+        close(farg->fd);
+        free(farg);
+        return;
+    }
+    
+    size_t total = 0;
+    while (total < filesize)
+    {
+        ssize_t n = read(file_fd, buffer + total, filesize - total);
+        if (n <= 0) break;
+        total += n;
+    }
+    close(file_fd);
+    
+    // 存入缓存（缓存拥有这份数据）
+    content *cont = malloc(sizeof(content));
+    cont->address = buffer;  // 缓存拥有buffer
+    cont->length = filesize;
+    
+    Cache_Put(cache, farg->filename, cont);
+    
+    // ★★★ 关键：为发送线程创建独立的数据副本 ★★★
+    sendparam *sarg = malloc(sizeof(sendparam));
+    if (sarg == NULL) {
+        logger(ERROR, "malloc failed", "sendparam", farg->fd);
+        close(farg->fd);
+        free(buffer);
+        free(cont);
+        free(farg);
+        return;
+    }
+    
+    sarg->fd = farg->fd;
+    sarg->filetype = farg->filetype;
+    sarg->length = filesize;
+    
+    sarg->data = malloc(filesize);
+    if (sarg->data == NULL) {
+        logger(ERROR, "malloc failed", "send data", farg->fd);
+        close(farg->fd);
+        free(sarg);
+        free(buffer);
+        free(cont);
+        free(farg);
+        return;
+    }
+    memcpy(sarg->data, buffer, filesize);
+    
+    // 创建发送任务
+    task *t = malloc(sizeof(task));
+    if (t == NULL) {
+        logger(ERROR, "malloc failed", "task", farg->fd);
+        close(farg->fd);
+        free(sarg->data);
+        free(sarg);
+        free(buffer);
+        free(cont);
+        free(farg);
+        return;
+    }
+    
+    t->function = web_send_msg;
+    t->arg = sarg;
+    t->next = NULL;
+    
+    addTask2ThreadPool(farg->pool, t);
     free(farg);
-    return;
-  }
-  struct stat st;
-  fstat(file_fd, &st);
-  size_t filesize = st.st_size;
-  content *cont = malloc(sizeof(content));
-  cont->address = malloc(filesize);
-  // atomic_init(&cont->ref, 1);
-  //strcpy(cont->filetype, farg->filetype);
-
-  size_t total = 0;
-
-  while (total < filesize)
-  {
-    ssize_t n =read(file_fd,(char *)cont->address + total,filesize - total);
-    if (n <= 0) break;
-    total += n;
-  }
-  cont->length = total;
-
-  close(file_fd);
-
-  Cache_Put(cache,farg->filename,cont);
-
-  sendparam *sarg =
-      malloc(sizeof(sendparam));
-
-  sarg->fd = farg->fd;
-  sarg->cont = cont;
-  sarg->filetype=farg->filetype;
-
-  task *t = malloc(sizeof(task));
-
-  t->function = web_send_msg;
-  t->arg = sarg;
-  t->next = NULL;
-
-  addTask2ThreadPool(farg->pool, t);
-
-  free(farg);
 }
 
 void web_send_msg(void *arg)
 {
     sendparam *param = (sendparam *)arg;
     
-    content *cont = param->cont;
-
+    // 构建HTTP响应头
     char header[512];
-
-    int header_len=snprintf(header,
+    int header_len = snprintf(header,
                  sizeof(header),
                  "HTTP/1.1 200 OK\r\n"
                  "Content-Length: %zu\r\n"
                  "Connection: close\r\n"
                  "Content-Type: %s\r\n"
                  "\r\n",
-                 cont->length,
+                 param->length,
                  param->filetype);
+    
+    // 发送header
     size_t sent = 0;
-
     while(sent < header_len)
     {
-        ssize_t n =
-            write(param->fd,
-                  header + sent,
-                  header_len - sent);
-        if(n <= 0)
+        ssize_t n = write(param->fd, header + sent, header_len - sent);
+        if(n <= 0) {
+            logger(ERROR, "write header failed", "", param->fd);
             break;
+        }
         sent += n;
     }
-    sent = 0;
-
-    while(sent < cont->length)
-    {
-        ssize_t n =
-            write(param->fd,
-                  (char*)cont->address + sent,
-                  cont->length - sent);
-
-        if(n <= 0)
-            break;
-
-        sent += n;
+    
+    // 如果header发送成功，发送body
+    if (sent == header_len) {
+        sent = 0;
+        while(sent < param->length)
+        {
+            ssize_t n = write(param->fd, (char*)param->data + sent, param->length - sent);
+            if(n <= 0) {
+                logger(ERROR, "write data failed", "", param->fd);
+                break;
+            }
+            sent += n;
+        }
     }
-
+    
     close(param->fd);
-    // if (atomic_fetch_sub(&cont->ref, 1) == 1) {
-    //     free(cont->address);
-    //     free(cont);
-    // }
+    
+    // 释放发送线程的独立数据副本
+    free(param->data);
     free(param);
 }
 

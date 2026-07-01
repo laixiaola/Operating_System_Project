@@ -58,7 +58,6 @@ typedef struct threadpool{
 	volatile bool is_alive;
 } threadpool;
 
-
 struct threadpool *initThreadPool(int num_threads);
 void addTask2ThreadPool(threadpool* pool,task* curtask);
 void waitThreadPool(threadpool* pool);

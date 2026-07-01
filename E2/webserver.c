@@ -280,7 +280,7 @@ int main(int argc, char **argv)
         logger(ERROR, "system call", "bind", 0);
 
     if (listen(listenfd, 64) < 0)
-        logger(ERROR, "system call", "listen", 0);
+        logger(ERROR, "system call", "listen", 0);    // 复制数据给发送线程
 
     for (hit = 1;; hit++) {
         length = sizeof(cli_addr);

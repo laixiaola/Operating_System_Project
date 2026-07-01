@@ -216,7 +216,7 @@ int main(int argc, char **argv)
     logger(ERROR,"Invalid port number (try 1->60000)",argv[1],0);
     
     //初始化线程池
-  threadpool* pool=initThreadPool(48);
+  threadpool* pool=initThreadPool(10);
   
   serv_addr.sin_family = AF_INET;
   serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);

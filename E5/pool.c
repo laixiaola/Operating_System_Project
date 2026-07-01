@@ -296,11 +296,6 @@ void staconvInit(staconv *stac, int status){
 	stac->status=status;
 }
 
-void staconvReset(staconv *stac){
-	pthread_mutex_destroy(&(stac->mutex));
-	pthread_cond_destroy(&(stac->cond));
-	staconvInit(stac,0);
-}
 
 void staconvPost(staconv *stac){
 	pthread_mutex_lock(&stac->mutex);
@@ -324,3 +319,9 @@ void staconvWait(staconv *stac){
 	stac->status=0;
 	pthread_mutex_unlock(&stac->mutex);
 }
+
+// void staconvReset(staconv *stac){
+// 	pthread_mutex_destroy(&(stac->mutex));
+// 	pthread_cond_destroy(&(stac->cond));
+// 	staconvInit(stac,0);
+// }
